@@ -46,3 +46,21 @@ for i =0:2
 end
 
 f = CamFun.F(K2, R2, t2)
+
+%Ex05.H
+QH = []
+for i =0:2
+    for j =0:2
+        for k =0:2
+            QH = [QH [i; j ; 10]];
+        end
+    end
+end
+
+H = CamFun.EstimateHomography(QH(1,:), QH(2,:))
+
+%EC04.I
+q1c = [-1/6; 1/3; 1];
+q2c = [-1/2; 2/7; 1];
+p =[q1c q2c]
+T = CamFun.normalize2d(p)

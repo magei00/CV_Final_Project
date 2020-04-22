@@ -167,8 +167,50 @@ classdef CamFun
             end
         end
          
-        function Hs = EstimateHomographies(Q, q)
+        function H = EstimateHomography(q1, q2)
+            x1 = q1(1)
+            y1 = q1(2)
+            x2 = q2(1)
+            y2 = q2(2)
             
+            B= [0          -x2     x2*y1   0       -y2     y2*y1   0   -1  y1;
+                 x2         0       -x2*x1  y2      0       -y2*x1  1   0   -x1;
+                 -x2*y1     x2*x1   0       -y2*y1  y2*x1   0       -y1 x1  0   ]
+             
+            [u,s,v]=svd(B);
+            Hv=v(:,end);
+            H= [Hv(1:3) Hv(4:6) Hv(7:9)]
+        end
+        
+        function Hs = EstimateHomographies(Q, q)
+            Hs=2
+        end
+        
+        function  [T, q] = normalize2d(p)
+            
+            centroid = mean( p(1:2,:)' )'
+            scale = sqrt(2) / mean( sqrt(sum(p(1:2,:).^2)) )
+            
+            T = diag([scale scale 1]);
+            T(1:2,3) = -scale*centroid;
+            
+            q = T*p
+            
+            %{
+            q = u;
+            q(1:2,:) = u(1:2,:) - repmat(centroid,1,n);
+            
+            smallest = min(min(p))
+            biggest = max(max(p))
+            t = (biggest+smallest)/2;
+            s = (biggest-smallest)/2;
+            T = [s 0 t;
+                 0 s t;
+                 0 0 1]
+            q = T*p
+            mean(q)
+            var(q)
+            %}
         end
     end
 end

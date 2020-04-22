@@ -33,7 +33,9 @@ Q_c = transpose(CamFun.R(-pi/10,0,0)*Q) ;
 
 plot3(Q_a(:,1), Q_a(:,2), Q_a(:,3), '.b', 'markersize', 10);
 hold on
-plot3(Q_b(:,1), Q_b(:,2), Q_b(:,3), '.b', 'markersize', 10);
+plot3(Q_b(:,1), Q_b(:,2), Q_b(:,3), '.g', 'markersize', 10);
 
-plot3(Q_c(:,1), Q_c(:,2), Q_c(:,3), '.b', 'markersize', 10);
+plot3(Q_c(:,1), Q_c(:,2), Q_c(:,3), '.r', 'markersize', 10);
 hold off
+
+%EX 05.E
