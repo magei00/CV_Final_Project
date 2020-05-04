@@ -1,15 +1,20 @@
-clear all
-cam = videoinput('winvideo',1,'YUY2_1920x1080');
+% closepreview(cam);
+% stop(cam);
+% flushdata(cam);
+clear all;
+
+cam = videoinput('winvideo',2,'YUY2_1920x1080');
 triggerconfig(cam, 'manual');
 
-set(cam, 'FramesPerTrigger', inf);
+set(cam, 'FramesPerTrigger', 1);
 set(cam, 'ReturnedColorspace', 'gray');
 
 cam.FrameGrabInterval = 1;  % distance between captured frames 
 
 timenow = datestr(now,'hhMMss_ddmmyy');
-vid = VideoWriter([timenow,'.avi'], 'Grayscale AVI');
+vid = VideoWriter([timenow,], 'MPEG-4');
 vid.FrameRate = 30;
+vid.Quality = 40;
 
 % f = figure('Name', 'Video Recording Preview');
 % uicontrol('String', 'Rec Stop', 'Callback', 'close(gcf)');
@@ -20,35 +25,38 @@ vid.FrameRate = 30;
 % preview(cam, hImage);
 
 start(cam);
-
+preview(cam);
 % Continue recording until figure gets closed
 % uiwait(f);
 
 open(vid);
 
-tic
-
 frames = cell(100,1);
-for frame=1:100
-    
+
+counter = 1;
+tic;
+%for frame=1:100
+while (toc < 130)    
     i = getsnapshot(cam);
     
     %bw = rgb2gray(i);
     
     %f = im2frame(i);
     
-    frames(frame, 1) = {i};
+    frames(counter, 1) = {i};
+    counter = counter + 1;
     %writeVideo(vid, i);
     
-end
-toc
-
-for i=1:100
-    writeVideo(vid, frames{i,1});
 end
 
 
 closepreview(cam);
-close(vid);
 stop(cam);
 flushdata(cam);
+
+for i=1:size(frames,1)
+    writeVideo(vid, frames{i,1});
+end
+
+
+close(vid);
