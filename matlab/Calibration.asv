@@ -1,0 +1,20 @@
+vr = VideoReader('empty_2.mp4');
+numFrames = vr.NumFrames;
+
+images = [];
+for i=1:numFrames:numFrames/10
+    images = [images vr
+end
+
+
+[corners, boardSize] = detectCheckerboardPoints(images);
+
+% REQUIRED
+squareSizeInMM = 29;
+
+worldPoints = generateCheckerboardPoints(boardSize,squareSizeInMM);
+
+imageSize = [1080 1920];
+
+params = estimateCameraParameters(corners,worldPoints, ...
+                                  'ImageSize',imageSize);
