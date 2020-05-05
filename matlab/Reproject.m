@@ -57,7 +57,7 @@ global cornerPoints
         errorx = (imagePoints(:, 1) - cornerPoints(:, 1, i));
         errory = (imagePoints(:, 2) - cornerPoints(:, 2, i));
         
-        error = norm(imagePoints(:, :), cornerPoints(:,:,i));
+        error = norm(imagePoints(i, :), cornerPoints(:,:,i));
         
         errorPerImage = [errorPerImage; error];
         mseSum = mseSum + error;
