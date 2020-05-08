@@ -1,15 +1,19 @@
-%Make sure to stop the free the camera if it's reserved
+
+global cam
+%Make sure to stop the camera if it's reserved
 if exist('cam','var')
     if isa(cam,'VideoInput')
         delete(cam)
     end
 end
 
+
 cam = 0;
 
-CreatePreviewWindow(cam);
+CreatePreviewWindow;
 
-function CreatePreviewWindow(cam)
+function CreatePreviewWindow
+    global cam
     [~,~,screenWidth, screenHeight] = feval(@(y) y{:}, num2cell(get(0, 'ScreenSize')));
     f = figure('Name', 'Video Recording Preview', ...
         'Position', [(screenWidth-1280)/2, (screenHeight-720)/2, 1280, 720]);
@@ -60,6 +64,7 @@ function CreatePreviewWindow(cam)
         % Need to reset the current camera, in case the parameters have
         % changed
         if cam ~= 0
+            recording = false;
             stop(cam);
             closepreview(cam);
             delete(cam);
@@ -205,7 +210,7 @@ function CreatePreviewWindow(cam)
 
         % Initialize frames as a cell array
         % We don't know size, so 1 will do for now
-        frames = cell(1,1);
+        frames = cell(500,1);
 
         % Set recording flag to true
         recording = true;
@@ -213,8 +218,10 @@ function CreatePreviewWindow(cam)
         % Frame counter
         counter = 1;
         
+        pause(0.2);
+        
         tic;
-        while (toc < duration && recording == true)
+        while (toc <= duration && recording == true)
             % Replace start recording button text with the elapsed time
             s = seconds(toc);
             s.Format = 'mm:ss';
@@ -225,22 +232,28 @@ function CreatePreviewWindow(cam)
 
             % Add to the frames array
             frames(counter, 1) = {i};
-            counter = counter + 1;            
+            counter = counter + 1;      
         end
 
+
         % Perform required steps when recording is over
-        stopRecording;
+        if recording == true
+            stopRecording;
+        end
+        
+        % Free cam cache
+        %stop(cam);
+        flushdata(cam);
+        
+        % Start previewing again
+        CreatePreview;
 
     end
 
     function stopRecording(src, event)
-        % Free cam cache
-        stop(cam);
-        flushdata(cam);
-        
         % Set recording flag to false
         recording = false;
-        
+           
         % Write the frames to a video file
         startButton.String = 'Writing Video';
         
@@ -252,6 +265,10 @@ function CreatePreviewWindow(cam)
         open(vid);
         
         for i=1:size(frames,1)
+            if isempty(frames{i,1})
+                break;
+            end
+            
             writeVideo(vid, frames{i,1});
         end
         
@@ -263,9 +280,16 @@ function CreatePreviewWindow(cam)
         startButton.Enable = 'on';
         stopButton.Enable = 'off';
         
-        % Start previewing again
-        preview(cam, hImage);
+
+        
+        answer = questdlg('Proceed with the calibration?',...
+            'Calibrate',...
+            'Yes', 'No', 'Yes');
+        
+        switch answer
+            case 'Yes'
+                % Calibrate using the recorded video
+                display(answer);      
+        end
     end
-
-
 end
