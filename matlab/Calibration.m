@@ -1,9 +1,9 @@
 clear all
-video = VideoReader('185226_040520_Trim.mp4');
+video = VideoReader('unityVid_1920_1080.mp4');
 numFrames = video.NumFrames;
 
 images = [];
-for i=1:50:numFrames
+for i=1:60:numFrames
     temp = read(video, i);
     images = cat(4,images, temp);
 end
@@ -14,8 +14,14 @@ end
 global numOfImages
 numOfImages = size(corners,3);
 
+figure;
+for i=1:numOfImages
+    hold on;
+    scatter(corners(:,1,i),corners(:,2,i), 50)
+end
+
 % REQUIRED
-squareSizeInMM = 224;
+squareSizeInMM = 25;
 
 worldPoints = generateCheckerboardPoints(boardSize,squareSizeInMM);
 
@@ -33,7 +39,7 @@ showReprojectionErrors(params);
 
 figure;
 showExtrinsics(params);
-figure;
+%figure;
 % 
 % j=0;
 % for i=1:size(images,4)

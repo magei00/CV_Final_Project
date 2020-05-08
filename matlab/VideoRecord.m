@@ -1,6 +1,3 @@
-% closepreview(cam);
-% stop(cam);
-% flushdata(cam);
 clear all;
 
 cam = videoinput('winvideo',2,'YUY2_1920x1080');
