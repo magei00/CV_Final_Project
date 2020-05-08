@@ -16,6 +16,14 @@ function CreatePreviewWindow(cam)
     f = figure('Name', 'Video Recording Preview', ...
         'Position', [(screenWidth-1280)/2, (screenHeight-720)/2, 1280, 720]);
     
+    previewDisabledText = uicontrol('Style', 'text', ...
+        'Units', 'normalized',...
+        'Position', [.3, .5, .4, .16],...
+        'Visible', 'off',...
+        'String', 'Preview is disabled for performance',...
+        'FontSize', 35,...
+        'BackgroundColor', 'black',...
+        'ForegroundColor', 'white');
     
     startButton = StartButton;
     
@@ -142,6 +150,8 @@ function CreatePreviewWindow(cam)
 
         start(cam);
         closepreview(cam);
+        
+        previewDisabledText.Visible = 'on';
         stopButton.Enable = 'on';
         startButton.Enable = 'off';
 
@@ -188,6 +198,8 @@ function CreatePreviewWindow(cam)
         
         close(vid);
         
+        
+        previewDisabledText.Visible = 'off';
         startButton.String = 'Start Recording';
         startButton.Enable = 'on';
         stopButton.Enable = 'off';
