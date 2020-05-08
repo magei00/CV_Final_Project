@@ -1,5 +1,4 @@
-%clear all;
-
+%Make sure to stop the free the camera if it's reserved
 if exist('cam','var')
     if isa(cam,'VideoInput')
         delete(cam)
@@ -9,7 +8,6 @@ end
 cam = 0;
 
 CreatePreviewWindow(cam);
-
 
 function CreatePreviewWindow(cam)
     [~,~,screenWidth, screenHeight] = feval(@(y) y{:}, num2cell(get(0, 'ScreenSize')));
@@ -25,20 +23,12 @@ function CreatePreviewWindow(cam)
         'BackgroundColor', 'black',...
         'ForegroundColor', 'white');
     
-    startButton = StartButton;
-    
-    recording = false;
-    
-    frames = 0;
-    
-    function s = StartButton
-        s = uicontrol('Parent', f,...
+    startButton = uicontrol('Parent', f,...
             'String', 'Start Recording', ...
             'Units', 'normalized',...
             'Position', [0.3, 0.05, 0.18, .05],...
             'FontSize', 15,...
-            'Callback', @startRecording);
-    end
+            'Callback', @startRecording);;
     
     stopButton = uicontrol('Parent', f,...
         'String', 'Stop Recording', ...
@@ -46,75 +36,115 @@ function CreatePreviewWindow(cam)
         'Position', [0.5, 0.05, 0.18, .05],...
         'FontSize', 15,...
         'Enable', 'off',...
-        'Callback', @stopRecording);
+        'Callback', @stopRecording);    
+        
+    % Whether a recording is in progress or not
+    recording = false;
     
+    % Temp, will hold the recorded frames before writing to a file
+    frames = 0;
+       
+    % Selected camera options, will get values from the drop downs
     selectedAdaptor = 0;
     selectedCamera = 0;
     selectedFormat = 0;
        
+    % Call the function to create the drop downs
     CameraChoice(f);
         
+    % Temp, will be used as the image to show the camera preview
+    hImage = 0;
+    
+    % Called to create a preview feed of the camera
     function CreatePreview
+        % Need to reset the current camera, in case the parameters have
+        % changed
         if cam ~= 0
             stop(cam);
             closepreview(cam);
             delete(cam);
         end
-        cam = videoinput(selectedAdaptor,selectedCamera,selectedFormat);
-        triggerconfig(cam, 'manual');
         
+        % Create a new videoinput with the current parameters
+        cam = videoinput(selectedAdaptor,selectedCamera,selectedFormat);
+        
+        % Recording parameters
+        triggerconfig(cam, 'manual');
         set(cam, 'FramesPerTrigger', 1);
         set(cam, 'ReturnedColorspace', 'gray');
+        cam.FrameGrabInterval = 1;
         
-        cam.FrameGrabInterval = 1;  % distance between captured frames
-        
+        % Preview image parameters
         vidRes = cam.VideoResolution;
         nBands = cam.NumberOfBands;
         hImage = image( zeros(vidRes(2), vidRes(1), nBands) );
         preview(cam, hImage);
-     %   imshow(hImage);
-        
-        
     end
     
+    % Handles drop down logic
     function CameraChoice(f)
+        % Get the connected cameras info
         hw = imaqhwinfo;
         adaptors = hw.InstalledAdaptors;
         
         t = uicontrol(f, 'Style', 'text', ...
-            'Position', [15,0,100,50],...
+            'Position', [10,0,100,50],...
             'String', 'Select a camera');
         
+        % References to the drop downs
         adaptorUI = adaptorPopup;
         cameraUI = cameraSelect;
         formatUI = formatPopup;
         
+        % Drop down for the camera selection
         function camera = cameraSelect
             camera = uicontrol(f, 'Style', 'popupmenu', 'Position', [130, 0, 200, 30]);
             
+            % Get the names of the camers connected to the selected adaptor
             dev =imaqhwinfo(selectedAdaptor);
-            devIDs = dev.DeviceInfo;
-            camera.String = {devIDs.DeviceName};
+            devIDs = {dev.DeviceInfo.DeviceName};
+            camera.String = devIDs;
+            
             camera.Callback = @selection;
+            
+            % Call the callback to update the formats drop down, to show
+            % the correct values for this camera
             feval(@selection, camera, []);
             
+            % Save the setting and update formats when camera is changed
             function selection(src,event)
                 val = camera.Value;
                 str = camera.String;
                 selectedCamera = val;
+                
+                % Delete formats drop down and create a new one with the
+                % values for the new selected camera
+                if ~isempty(event)
+                    delete(formatUI);
+                end
                 formatUI = formatPopup;
             end
         end
         
+        % Drop down for format selection
         function format = formatPopup
             format = uicontrol(f, 'Style', 'popupmenu', 'Position', [350, 0, 200, 30]);
             
+            % Get available formats
             dev =imaqhwinfo(selectedAdaptor,selectedCamera);
             formats = dev.SupportedFormats;
             format.String = formats;
+            
             format.Callback = @selection;
+            
+            % Call the callback manually to update selected format
             feval(@selection, format, []);
             
+            % Update selected format and initialize a preview feed with the
+            % new parameters
+            % Changing any of the other drop downs will call this function
+            % eventually, from left to right: Adaptor calls Camera, Camera
+            % calls Format, Format calls CreatePreview
             function selection(src,event)
                 val = format.Value;
                 str = format.String;
@@ -123,16 +153,29 @@ function CreatePreviewWindow(cam)
             end
         end
         
+        % Drop down for the adaptors
         function adaptor = adaptorPopup
             adaptor = uicontrol(f, 'Style', 'popupmenu', 'Position', [15, 0, 100, 30]);
+            
+            % Get adaptor names
             adaptor.String = adaptors;
+            
+            % For the first time save the first adaptor found as the
+            % selected
             adaptor.Callback = @selection;
             feval(@selection, adaptor, []);
             
+            % Save selection and update camera drop down
             function selection(src,event)
                 val = adaptor.Value;
                 str = adaptor.String;
                 selectedAdaptor = str{val};
+                
+                % Delete the previous drop down and create a new one with
+                % the values for the new selected adaptor
+                if ~isempty(event)
+                    delete(cameraUI);
+                end
                 cameraUI = cameraSelect;
             end
         end
@@ -149,40 +192,56 @@ function CreatePreviewWindow(cam)
         end
 
         start(cam);
-        closepreview(cam);
         
+        % Stop preivew when recording, as it is a significant performance
+        % overhead when recording, which in turn makes it impossile to get
+        % real time video
+        closepreview(cam);
         previewDisabledText.Visible = 'on';
+        
+        % Toggle button interactivity
         stopButton.Enable = 'on';
         startButton.Enable = 'off';
 
+        % Initialize frames as a cell array
+        % We don't know size, so 1 will do for now
         frames = cell(1,1);
 
+        % Set recording flag to true
         recording = true;
 
+        % Frame counter
         counter = 1;
+        
         tic;
         while (toc < duration && recording == true)
+            % Replace start recording button text with the elapsed time
             s = seconds(toc);
             s.Format = 'mm:ss';
             startButton.String = char(s);
 
+            % Take a snapshot
             i = getsnapshot(cam);
 
+            % Add to the frames array
             frames(counter, 1) = {i};
             counter = counter + 1;            
         end
 
+        % Perform required steps when recording is over
         stopRecording;
 
     end
 
     function stopRecording(src, event)
+        % Free cam cache
         stop(cam);
         flushdata(cam);
         
+        % Set recording flag to false
         recording = false;
         
-        
+        % Write the frames to a video file
         startButton.String = 'Writing Video';
         
         timenow = datestr(now,'hhMMss_ddmmyy');
@@ -198,24 +257,15 @@ function CreatePreviewWindow(cam)
         
         close(vid);
         
-        
+        % Update buttons        
         previewDisabledText.Visible = 'off';
         startButton.String = 'Start Recording';
         startButton.Enable = 'on';
         stopButton.Enable = 'off';
+        
+        % Start previewing again
+        preview(cam, hImage);
     end
 
 
 end
-
-
-
-% 
-% 
-% open(vid);
-% 
-% close(vid);
-
-
-
-
