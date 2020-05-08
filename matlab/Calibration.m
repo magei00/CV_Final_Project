@@ -11,6 +11,9 @@ end
 
 [corners, boardSize, patternDetected] = detectCheckerboardPoints(images);
 
+global numOfImages
+numOfImages = size(corners,3);
+
 % REQUIRED
 squareSizeInMM = 224;
 
@@ -31,9 +34,10 @@ showReprojectionErrors(params);
 figure;
 showExtrinsics(params);
 figure;
-
-j=0;
+% 
+% j=0;
 % for i=1:size(images,4)
+%     figure
 %     if patternDetected(i) == 0
 %         continue
 %     end
