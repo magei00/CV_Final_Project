@@ -249,8 +249,8 @@ function CreatePreviewWindow
         % Stop preivew when recording, as it is a significant performance
         % overhead when recording, which in turn makes it impossile to get
         % real time video
-        closepreview(cam);
-        previewDisabledText.Visible = 'on';
+        %closepreview(cam);
+        %previewDisabledText.Visible = 'on';
         
         % Toggle button interactivity
         stopButton.Enable = 'on';
@@ -328,7 +328,7 @@ function CreatePreviewWindow
         startButton.Enable = 'on';
         stopButton.Enable = 'off';
         selectedFile = timenow;
-        selectedFileText.String = timenow;
+        selectedFileText.String = [timenow,'.mp4'];
         calibrateButton.Enable = 'on';
         
 
@@ -368,7 +368,7 @@ function calibrate(src, event)
 
     % Sampe one frame every 60 from the video
     images = [];
-    for i=1:60:numFrames
+    for i=1:70:numFrames
         progress = (i/numFrames)*100;
         statusText.String = sprintf('Step 1 of 3: Reading frames from video... %.1f%%', progress);
         temp = read(video, i);
